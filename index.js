@@ -24,7 +24,7 @@ const productsRoutes = require('./routers/products');
 // const Product = mongoose.model('e-Collection', productSchema); // Đổi tên mô hình thành 'Product'
 
 const api = process.env.API_URL;
-app.use(`${api}/products`, productsRoutes);
+app.use(`/1`, productsRoutes);
 
 // app.get(api + '/', async (req, res) =>{
 //  const productList =await Product.find();

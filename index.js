@@ -14,47 +14,11 @@ app.use(morgan('tiny'));
 
 //Routes
 const productsRoutes = require('./routers/products');
-// Mô hình sản phẩm
-// const productSchema = mongoose.Schema({
-//     name: String,
-//     image: String,
-//     countStock: Number
-// });
-
-// const Product = mongoose.model('e-Collection', productSchema); // Đổi tên mô hình thành 'Product'
+const categorysRoutes = require('./routers/category');
 
 const api = process.env.API_URL;
-app.use(`${api}/hello`, productsRoutes);
-
-// app.get(api + '/', async (req, res) =>{
-//  const productList =await Product.find();
-//  res.send(productList);
-// })
-// app.post(api + '/', (req, res) => {
-//     // Lấy dữ liệu từ yêu cầu (request)
-//     const { name, image, countStock } = req.body;
-
-//     // Tạo một đối tượng sản phẩm mới
-//     const product = new Product({
-//         name: name,
-//         image: image,
-//         countStock: countStock
-//     });
-
-//     // Lưu sản phẩm vào cơ sở dữ liệu
-//     product.save()
-//         .then(createdProduct => {
-//             // Trả về "added" khi POST thành công
-//             res.status(201).json({ message: "added" });
-//         })
-//         .catch(err => {
-//             console.error(err);
-//             // Trả về "fail" khi gặp lỗi
-//             res.status(500).json({ message: "fail" });
-//         });
-// });
-
-
+app.use(`${api}/products`, productsRoutes);
+app.use(`${api}/category`, categorysRoutes);
 // Kết nối với cơ sở dữ liệu
 mongoose.connect(process.env.CONNECTION_STRING, {
     useNewUrlParser: true,

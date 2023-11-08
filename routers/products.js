@@ -4,32 +4,42 @@ const { Category } = require('../models/category');
 const router = express.Router();
 const mongoose = require('mongoose');
 
-
-router.get(`/`, async (req, res) =>{
-    // localhost:3000/api/v1/products?categories=2342342,234234
-    let filter = {};
-    if(req.query.categories)
-    {
-         filter = {category: req.query.categories.split(',')}
+// localhost:3000/api/v1/products?categories=2342342,234234
+router.get(`/`, async (req, res) => {
+    try {
+      let filter = {};
+      if (req.query.categories) {
+        filter = { category: req.query.categories.split(',') };
+      }
+  
+      const productList = await Product.find(filter).populate('category');
+  
+      if (!productList || productList.length === 0) {
+        return res.status(404).json({ success: false, message: 'No products found' });
+      }
+  
+      res.send(productList);
+    } catch (error) {
+      // Xử lý lỗi nếu có
+      res.status(500).json({ success: false, message: 'An error occurred while processing your request' });
     }
-
-    const productList = await Product.find(filter).populate('category');
-
-    if(!productList) {
-        res.status(500).json({success: false})
-    } 
-    res.send(productList);
-})
-
-router.get(`/:id`, async (req, res) =>{
-    const product = await Product.findById(req.params.id).populate('category');
-
-    if(!product) {
-        res.status(500).json({success: false})
-    } 
-    res.send(product);
-})
-
+  });
+  
+  router.get(`/:id`, async (req, res) => {
+    try {
+      const product = await Product.findById(req.params.id).populate('category');
+  
+      if (!product) {
+        return res.status(404).json({ success: false, message: 'Product not found' });
+      }
+  
+      res.send(product);
+    } catch (error) {
+      // Xử lý lỗi nếu có
+      res.status(500).json({ success: false, message: 'An error occurred while processing your request' });
+    }
+  });
+  
 router.post(`/`, async (req, res) => {
     try {
       const category = await Category.findById(req.body.category);
@@ -117,38 +127,29 @@ router.delete('/:id', async (req, res) => {
   });
   
 
-  router.get(`/count`, async (req, res) => {
-    try {
-      const productCount = await Product.countDocuments((count) => count);
-  
-      if (!productCount) {
-        return res.status(500).json({ success: false });
-      }
-      
-      res.send({
+  router.get(`/get/count`, async (req, res) => {
+    const productCount = await Product.countDocuments();
+
+    if (!productCount) {
+        res.status(500).json({ success: false });
+    }
+    res.send({
         productCount: productCount
-      });
-    } catch (error) {
-      // Xử lý lỗi nếu có
-      res.status(500).json({ success: false, message: 'An error occurred while processing your request' });
+    });
+})
+
+
+router.get(`/get/featured/:count`, async (req, res) => {
+    const count = req.params.count || 0;
+    const products = await Product.find({ isFeatured: true }).limit(parseInt(count));
+
+    if (products && products.length > 0) {
+        res.send(products);
+    } else {
+        res.status(404).json({ success: false, message: 'No featured products found' });
     }
-  });
-  
-  router.get(`/featured/:count`, async (req, res) => {
-    try {
-      const count = req.params.count ? req.params.count : 0;
-      const products = await Product.find({ isFeatured: true }).limit(+count);
-  
-      if (!products || products.length === 0) {
-        return res.status(404).json({ success: false, message: 'No featured products found' });
-      }
-      
-      res.send(products);
-    } catch (error) {
-      // Xử lý lỗi nếu có
-      res.status(500).json({ success: false, message: 'An error occurred while processing your request' });
-    }
-  });
+});
+
   
 
 module.exports =router;

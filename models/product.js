@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-// Mô hình sản phẩm
+
 const productSchema = mongoose.Schema({
     name: {
         type: String,
@@ -56,6 +56,7 @@ const productSchema = mongoose.Schema({
         default: Date.now,
     },
 })
+
 productSchema.virtual('id').get(function () {
     return this._id.toHexString();
 });
@@ -63,7 +64,6 @@ productSchema.virtual('id').get(function () {
 productSchema.set('toJSON', {
     virtuals: true,
 });
-// const Product = mongoose.model('e-Collection', productSchema); // Đổi tên mô hình thành 'Product'
-// exports.Product;
-// module.Product = mongoose.model('Product', productSchema);
+
+
 exports.Product = mongoose.model('Product', productSchema);

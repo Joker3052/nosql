@@ -16,7 +16,7 @@ function authJwt() {
             { url: /\/pbl6\/users(.*)/, methods: ['GET', 'OPTIONS', 'POST', 'PUT', 'DELETE'] },
             { url: /\/pbl6\/orders(.*)/, methods: ['GET', 'OPTIONS', 'POST', 'PUT', 'DELETE'] },
             {url: /\/public\/uploads(.*)/ , methods: ['GET','OPTIONS', 'POST', 'PUT', 'DELETE'] },
-
+            {url: /\/(.*)/ , methods: ['GET','OPTIONS', 'POST', 'PUT', 'DELETE'] },
         ]
     })
 }

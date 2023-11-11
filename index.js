@@ -15,15 +15,18 @@ app.use(express.json()); // Sử dụng express.json() để xử lý JSON
 app.use(morgan('tiny'));
 app.use(authJwt());
 app.use(errorHandler);
+app.use('/public/uploads', express.static(__dirname + '/public/uploads'))
 //Routes
 const productsRoutes = require('./routers/products');
 const categorysRoutes = require('./routers/category');
 const usersRoutes = require('./routers/user');
+const ordersRoutes = require('./routers/orders');
 
 const api = process.env.API_URL;
 app.use(`${api}/products`, productsRoutes);
 app.use(`${api}/category`, categorysRoutes);
 app.use(`${api}/users`, usersRoutes);
+app.use(`${api}/orders`, ordersRoutes);
 // Kết nối với cơ sở dữ liệu
 mongoose.connect(process.env.CONNECTION_STRING, {
     useNewUrlParser: true,

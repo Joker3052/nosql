@@ -3,6 +3,35 @@ const express = require('express');
 const { Category } = require('../models/category');
 const router = express.Router();
 const mongoose = require('mongoose');
+const multer = require('multer');
+
+const FILE_TYPE_MAP = {
+    'image/png': 'png',
+    'image/jpeg': 'jpeg',
+    'image/jpg': 'jpg',
+    'image/webp': 'webp'
+}
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        const isValid = FILE_TYPE_MAP[file.mimetype];
+        let uploadError = new Error('invalid image type');
+
+        if(isValid) {
+            uploadError = null
+        }
+      cb(uploadError, 'public/uploads')
+    },
+    filename: function (req, file, cb) {
+        
+      const fileName = file.originalname.split(' ').join('-');
+      const extension = FILE_TYPE_MAP[file.mimetype];
+      cb(null, `${fileName}-${Date.now()}.${extension}`)
+    }
+  })
+  
+const uploadOptions = multer({ storage: storage })
+
 
 // localhost:3000/api/v1/products?categories=2342342,234234
 router.get(`/`, async (req, res) => {
@@ -40,38 +69,77 @@ router.get(`/`, async (req, res) => {
     }
   });
   
-router.post(`/`, async (req, res) => {
-    try {
+// router.post(`/`, async (req, res) => {
+//     try {
+//       const category = await Category.findById(req.body.category);
+//       if (!category) return res.status(400).send('Invalid Category');
+  
+//       let product = new Product({
+//         name: req.body.name,
+//         description: req.body.description,
+//         richDescription: req.body.richDescription,
+//         image: req.body.image,
+//         brand: req.body.brand,
+//         price: req.body.price,
+//         category: req.body.category,
+//         countInStock: req.body.countInStock,
+//         rating: req.body.rating,
+//         numReviews: req.body.numReviews,
+//         isFeatured: req.body.isFeatured,
+//       });
+  
+//       product = await product.save();
+  
+//       if (!product) {
+//         return res.status(500).send('The product cannot be created');
+//       }
+  
+//       res.send(product);
+//     } catch (error) {
+//       // Xử lý lỗi nếu có
+//       res.status(500).send(error);
+//       res.status(500).send('An error occurred while processing your request.');
+//     }
+//   });
+router.post(`/`, uploadOptions.single('image'), async (req, res) => {
+  try {
       const category = await Category.findById(req.body.category);
       if (!category) return res.status(400).send('Invalid Category');
-  
+
+      const file = req.file;
+      if (!file) return res.status(400).send('No image in the request');
+
+      const fileName = file.filename;
+      const basePath = `${req.protocol}://${req.get('host')}/public/uploads/`;
       let product = new Product({
-        name: req.body.name,
-        description: req.body.description,
-        richDescription: req.body.richDescription,
-        image: req.body.image,
-        brand: req.body.brand,
-        price: req.body.price,
-        category: req.body.category,
-        countInStock: req.body.countInStock,
-        rating: req.body.rating,
-        numReviews: req.body.numReviews,
-        isFeatured: req.body.isFeatured,
+          name: req.body.name,
+          description: req.body.description,
+          richDescription: req.body.richDescription,
+          image: `${basePath}${fileName}`, // "http://localhost:3000/public/upload/image-2323232"
+          brand: req.body.brand,
+          price: req.body.price,
+          category: req.body.category,
+          countInStock: req.body.countInStock,
+          rating: req.body.rating,
+          numReviews: req.body.numReviews,
+          isFeatured: req.body.isFeatured,
       });
-  
+
       product = await product.save();
-  
+
       if (!product) {
-        return res.status(500).send('The product cannot be created');
+          return res.status(500).send('The product cannot be created');
       }
-  
+
       res.send(product);
-    } catch (error) {
-      // Xử lý lỗi nếu có
-      res.status(500).send('An error occurred while processing your request.');
-    }
-  });
-  
+  } catch (error) {
+      // Xử lý ngoại lệ và trả về một phản hồi lỗi
+      console.error('Error creating product:', error);
+      res.status(500).send('Internal Server Error');
+  }
+});
+
+
 router.put('/:id', async (req, res) => {
     try {
       if (!mongoose.isValidObjectId(req.params.id)) {
@@ -149,7 +217,45 @@ router.get(`/get/featured/:count`, async (req, res) => {
         res.status(404).json({ success: false, message: 'No featured products found' });
     }
 });
+router.put(
+  '/gallery-images/:id', 
+  uploadOptions.array('images', 10), 
+  async (req, res) => {
+      try {
+          if (!mongoose.isValidObjectId(req.params.id)) {
+              return res.status(400).send('Invalid Product Id');
+          }
 
+          const files = req.files;
+          let imagesPaths = [];
+          const basePath = `${req.protocol}://${req.get('host')}/public/uploads/`;
+
+          if (files) {
+              files.map(file => {
+                  imagesPaths.push(`${basePath}${file.filename}`);
+              });
+          }
+
+          const product = await Product.findByIdAndUpdate(
+              req.params.id,
+              {
+                  images: imagesPaths
+              },
+              { new: true }
+          );
+
+          if (!product) {
+              return res.status(500).send('The gallery cannot be updated!');
+          }
+
+          res.send(product);
+      } catch (error) {
+          // Xử lý ngoại lệ và trả về một phản hồi lỗi
+          console.error('Error updating gallery:', error);
+          res.status(500).send('Internal Server Error');
+      }
+  }
+);
   
 
 module.exports =router;
